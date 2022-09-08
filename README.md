@@ -1,6 +1,6 @@
 # README
 
-blub
+A version with one assessed vulnerability.
   
  
  
