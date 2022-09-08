@@ -1,0 +1,93 @@
+# This is a basic workflow to help you get started with Actions
+
+name: CI
+
+# Controls when the workflow will run
+on:
+  # Triggers the workflow on push or pull request events but only for the "main" branch
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  build:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v3
+
+      - name: Install cifuzz
+        run: |
+          sh -c "$(curl -fsSL https://raw.githubusercontent.com/CodeIntelligenceTesting/cifuzz/main/install.sh)"
+
+      - name: Build fuzzers
+        run: |
+          export PATH="$PATH:$HOME/cifuzz/bin"
+          cifuzz bundle
+          mkdir fuzz_tests && cd fuzz_tests
+          tar -xvzf ../fuzz_tests.tar.gz
+          egrep -v 'library_paths|- ""' cifuzz.yaml > cifuzz2.yaml
+          sed 's|ubuntu|cifuzz/builder-zint:0f8f37343087323e6345a556530a4b1296573d25|' cifuzz2.yaml > cifuzz.yaml
+          tar -cvzf ../fuzz_tests.tar.gz *
+
+      - name: Upload fuzzer
+        id: start-fuzzing
+        env:
+          BEARER_TOKEN: ${{secrets.CI_FUZZ_API_TOKEN}}
+        run: |
+          export IMPORT_RESULT=$(curl -s \
+               -H "Authorization: Bearer $BEARER_TOKEN" \
+               -F 'fuzzing-artifacts=@fuzz_tests.tar.gz' \
+               https://app.code-intelligence.com/v2/projects/cli-cpp-demo-ci-992a86ca/artifacts/import)
+          echo "${IMPORT_RESULT}"
+          export ARTIFACT_NAME=$(echo "$IMPORT_RESULT" | jq -r '."resource-name"')
+          echo "https://app.code-intelligence.com/v1/${ARTIFACT_NAME}:run"
+          export RUN_RESULT=$(curl -X POST -H "Authorization: Bearer $BEARER_TOKEN" \
+              "https://app.code-intelligence.com/v1/${ARTIFACT_NAME}:run")
+          echo "${RUN_RESULT}"
+          export CAMPAIGN_RUN_NAME=$(echo "$RUN_RESULT" | jq -r '."name"')
+          echo "::set-output name=test_collection_run::${CAMPAIGN_RUN_NAME}"
+
+      - name: Monitor Fuzzing
+        uses: CodeIntelligenceTesting/github-actions/monitor-fuzzing@v3
+        with:
+          ci_fuzz_api_token: ${{secrets.CI_FUZZ_API_TOKEN}}
+          test_collection_run: ${{ steps.start-fuzzing.outputs.test_collection_run }}
+          fuzzing_server_address: grpc.code-intelligence.com:443
+          dashboard_address: https://app.code-intelligence.com/
+          timeout: 180
+
+      - name: Save Fuzz Test Results
+        uses: CodeIntelligenceTesting/github-actions/save-results@v3
+        if: ${{ success() || failure() }}
+        with:
+          ci_fuzz_api_token: ${{secrets.CI_FUZZ_API_TOKEN}}
+          test_collection_run: ${{ steps.start-fuzzing.outputs.test_collection_run }}
+          fuzzing_server_address: grpc.code-intelligence.com:443
+          dashboard_address: https://app.code-intelligence.com/
+
+      - id: upload-artifact
+        uses: actions/upload-artifact@v2
+        if: ${{ (success() || failure()) }}
+        with:
+          name: ci_fuzz_results
+          path: | 
+            findings.json
+            coverage.json
+            web_app_address.txt
+
+      - id: coverage
+        uses: CodeIntelligenceTesting/github-actions/report-coverage@master
+        with:
+          ci_fuzz_api_token: ${{secrets.CI_FUZZ_API_TOKEN}}
+          project: cli-cpp-demo-ci-992a86ca
+          test_collection_run: ${{ steps.start-fuzzing.outputs.test-collection-run }}
