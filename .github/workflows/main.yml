@@ -47,7 +47,7 @@ jobs:
           export IMPORT_RESULT=$(curl -s \
                -H "Authorization: Bearer $BEARER_TOKEN" \
                -F 'fuzzing-artifacts=@fuzz_tests.tar.gz' \
-               https://app.code-intelligence.com/v2/projects/cli-cpp-demo-ci-992a86ca/artifacts/import)
+               https://app.code-intelligence.com/v2/projects/c-cpp-demo-c170bc17/artifacts/import)
           echo "${IMPORT_RESULT}"
           export ARTIFACT_NAME=$(echo "$IMPORT_RESULT" | jq -r '."resource-name"')
           echo "https://app.code-intelligence.com/v1/${ARTIFACT_NAME}:run"
@@ -89,5 +89,5 @@ jobs:
         uses: CodeIntelligenceTesting/github-actions/report-coverage@master
         with:
           ci_fuzz_api_token: ${{secrets.CI_FUZZ_API_TOKEN}}
-          project: cli-cpp-demo-ci-992a86ca
+          project: c-cpp-demo-c170bc17
           test_collection_run: ${{ steps.start-fuzzing.outputs.test-collection-run }}
