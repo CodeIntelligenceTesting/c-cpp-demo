@@ -35,7 +35,7 @@ jobs:
           tar -xvzf ../fuzz_tests.tar.gz
           egrep -v 'library_paths|- ""' cifuzz.yaml > cifuzz2.yaml
           sed 's|ubuntu|cifuzz/builder-zint:llvm-13|' cifuzz2.yaml > cifuzz.yaml
-          sed -i "s/branch: master/branch: $GITHUB_REF_NAME/g" cifuzz.yaml
+          sed -i "s|branch: master|branch: $GITHUB_REF_NAME|g" cifuzz.yaml
           cat cifuzz.yaml
           tar -cvzf ../fuzz_tests.tar.gz *
 
