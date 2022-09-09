@@ -38,7 +38,7 @@ jobs:
           echo "code_revision:" >> cifuzz.yaml
           echo "    git:" >> cifuzz.yaml
           echo "        commit: $GITHUB_SHA" >> cifuzz.yaml
-          echo "        branch: $GITHUB_REF_NAME" >> cifuzz.yaml
+          echo "        branch: $GITHUB_HEAD_REF" >> cifuzz.yaml
           cat cifuzz.yaml
           tar -cvzf ../fuzz_tests.tar.gz *
 
