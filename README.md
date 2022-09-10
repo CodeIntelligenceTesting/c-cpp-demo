@@ -27,4 +27,5 @@ to detect the stack buffer overflow.
 To learn more about how to write your own fuzz tests have a look [here](https://github.com/CodeIntelligenceTesting/cifuzz/blob/main/docs/How-To-Write-A-Fuzz-Test.md).
 
 If you want to learn more about fuzzing in general, head over to [Code Intelligence](https://www.code-intelligence.com). 
- 
+
+
