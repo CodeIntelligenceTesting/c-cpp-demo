@@ -8,5 +8,6 @@ void heap_buffer_overflow(int a, int b, std::string c) {
           char *s = (char *)malloc(100);
           strcpy(s, "too long");
           printf("%s\n", s);
+          free(s);
   }
 }
