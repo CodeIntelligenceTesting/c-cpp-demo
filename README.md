@@ -28,3 +28,11 @@ To learn more about how to write your own fuzz tests have a look [here](https://
 
 If you want to learn more about fuzzing in general, head over to [Code Intelligence](https://www.code-intelligence.com). 
  
+## Running inside docker
+If you want to run cifuzz without installing it (and the dependencies) you can just run
+it inside docker with the provided `Dockerfile`
+
+```
+docker build -t cifuzz-demo .
+docker run -it cifuzz-demo cifuzz run stack_buffer_overflow_test
+```
