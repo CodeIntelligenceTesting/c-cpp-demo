@@ -1,7 +1,6 @@
 #include "heap_buffer_overflow.h"
 #include <cifuzz/cifuzz.h>
 #include <fuzzer/FuzzedDataProvider.h>
-#include <stdio.h>
 
 FUZZ_TEST_SETUP() {}
 
